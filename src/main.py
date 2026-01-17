@@ -3,19 +3,20 @@ import os
 from shutil import rmtree, copy
 from parser import *
 from pathlib import Path
+import sys
 
-def main():
-    static_copy()
+def main(basepath):
+    static_copy(basepath)
 #    textNode = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
 #    print(textNode)
 
 
-def static_copy():
-    if (os.path.exists('./public')): 
-        rmtree('./public')
-    os.mkdir('./public')
-    copy_folder('./static', './public')
-    generate_pages_recursive('./content/', './template.html', './public')
+def static_copy(basepath):
+    if (os.path.exists('./docs')): 
+        rmtree('./docs')
+    os.mkdir('./docs')
+    copy_folder('./static', './docs')
+    generate_pages_recursive(basepath, './content/', './template.html', './docs')
 
 def extract_title(markdown):
     pattern = r"^#\s+(.+)$"
@@ -26,9 +27,9 @@ def extract_title(markdown):
         
     raise Exception("no title")
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(basepath, dir_path_content, template_path, dest_dir_path):
     for content in os.listdir(dir_path_content):
-        
+
         if "." in content:
             name, ext = content.rsplit(".", 1)
         else:
@@ -39,15 +40,15 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
 
         if not os.path.isfile(content_from):
             os.mkdir(content_to)
-            generate_pages_recursive(content_from, template_path, content_to)
+            generate_pages_recursive(basepath, content_from, template_path, content_to)
         elif(ext == 'md'):            
             content_to = dest_dir_path + '/' + name + ".html"
-            generate_page(content_from, template_path, content_to)
+            generate_page(basepath, content_from, template_path, content_to)
 
  
 
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(basepath, from_path, template_path, dest_path):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
     content = None
     template = None
@@ -60,6 +61,9 @@ def generate_page(from_path, template_path, dest_path):
     html = template.replace("{{ Title }}", extract_title(content)).replace("{{ Content }}", node.to_html())
  
     os.makedirs(Path(dest_path).parent, exist_ok=True)   
+
+    html.replace('href="/',f'href="{basepath}')
+    html.replace('src="/',f'src="{basepath}')
 
     with open(dest_path, 'w') as f:
         f.write(html)
@@ -79,4 +83,5 @@ def copy_folder(from_dir, to_dir):
             copy_folder(content_from, content_to)
     return
 
-main()
+basepath = sys.argv[0] if len(sys.argv) != 0 else "/"
+main(basepath)
