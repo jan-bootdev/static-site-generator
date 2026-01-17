@@ -12,6 +12,7 @@ def main(basepath):
 
 
 def static_copy(basepath):
+    print("building with basepath: ", basepath)
     if (os.path.exists('./docs')): 
         rmtree('./docs')
     os.mkdir('./docs')
@@ -62,8 +63,8 @@ def generate_page(basepath, from_path, template_path, dest_path):
  
     os.makedirs(Path(dest_path).parent, exist_ok=True)   
 
-    html.replace('href="/',f'href="{basepath}')
-    html.replace('src="/',f'src="{basepath}')
+    html = html.replace('href="/',f'href="{basepath}')
+    html = html.replace('src="/',f'src="{basepath}')
 
     with open(dest_path, 'w') as f:
         f.write(html)
@@ -83,5 +84,5 @@ def copy_folder(from_dir, to_dir):
             copy_folder(content_from, content_to)
     return
 
-basepath = sys.argv[0] if len(sys.argv) != 0 else "/"
+basepath = sys.argv[1] if len(sys.argv) > 1 else "/"
 main(basepath)
